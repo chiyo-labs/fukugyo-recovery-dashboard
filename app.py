@@ -235,20 +235,18 @@ def main():
         unsafe_allow_html=True,
     )
     st.markdown('<div class="tabs-top-space"></div>', unsafe_allow_html=True)
-
-    if "app_page" not in st.session_state:
-        st.session_state["app_page"] = "main"
-    col_setup, col_main = st.columns(2)
-    if col_setup.button("初期設定", use_container_width=True):
-        st.session_state["app_page"] = "setup"
-    if col_main.button("メイン画面", use_container_width=True):
-        st.session_state["app_page"] = "main"
-    current_page = st.session_state["app_page"]
+    if "spreadsheet_id" not in st.session_state:
+        st.session_state["spreadsheet_id"] = ""
+    if "is_initialized" not in st.session_state:
+        st.session_state["is_initialized"] = False
 
     spreadsheet_id_default = st.session_state.get("spreadsheet_id", "")
+    is_initialized = st.session_state.get("is_initialized", False)
+
+    show_setup_page = (not spreadsheet_id_default.strip()) or (not is_initialized)
     df = None
 
-    if current_page == "setup":
+    if show_setup_page:
         st.info(
             """【使い方】
 ① 以下のリンクからテンプレートをコピー
@@ -267,7 +265,6 @@ def main():
         ).strip()
         st.caption("※URLの「/d/〜/edit」の間の文字列がIDです")
         load_button_clicked = st.button("データを読み込む", use_container_width=True)
-        st.session_state["spreadsheet_id"] = spreadsheet_id
 
         service_account_email = ""
         if "gcp_service_account" in st.secrets:
@@ -291,12 +288,9 @@ def main():
             if not spreadsheet_id:
                 st.warning("スプレッドシートIDを入力してください")
             else:
-                try:
-                    load_sheet_data(spreadsheet_id)
-                    st.success("データを読み込みました。上部メニューから各ページへ進んでください。")
-                except Exception as e:
-                    st.error("スプレッドシートにアクセスできません。共有設定やIDを確認してください。")
-                    st.caption(f"詳細: {e}")
+                st.session_state["spreadsheet_id"] = spreadsheet_id
+                st.session_state["is_initialized"] = True
+                st.rerun()
         return
 
     spreadsheet_id = st.session_state.get("spreadsheet_id", "").strip()
