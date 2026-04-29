@@ -14,6 +14,7 @@ st.set_page_config(
 )
 
 WORKSHEET_NAME = "Input"
+TEMPLATE_SPREADSHEET_ID = "1WEGXNH47jHydGSC4QfWa7XXdFCIs5xt4UO1XVonLjHI"
 
 REQUIRED_COLUMNS = [
     "日付",
@@ -232,6 +233,18 @@ def main():
         </div>
         """,
         unsafe_allow_html=True,
+    )
+    st.info(
+        """【使い方】
+
+① 以下のリンクからテンプレートをコピー
+② 自分のGoogle Driveに保存
+③ スプレッドシートIDを入力"""
+    )
+    st.link_button(
+        "テンプレートをコピーする",
+        f"https://docs.google.com/spreadsheets/d/{TEMPLATE_SPREADSHEET_ID}/copy",
+        use_container_width=True,
     )
 
     spreadsheet_id_default = st.session_state.get("spreadsheet_id", "")
