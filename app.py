@@ -241,6 +241,7 @@ def main():
         help="自分のGoogleスプレッドシートIDを入力してください",
         placeholder="https://docs.google.com/spreadsheets/d/ここがID/edit",
     ).strip()
+    st.caption("※スプレッドシートのURLの「/d/〜/edit」の間の文字列がIDです")
     st.session_state["spreadsheet_id"] = spreadsheet_id
 
     if not spreadsheet_id:
