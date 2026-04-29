@@ -234,34 +234,44 @@ def main():
         """,
         unsafe_allow_html=True,
     )
-    st.info(
-        """【使い方】
-
-① 以下のリンクからテンプレートをコピー
-② 自分のGoogle Driveに保存
-③ コピーしたスプレッドシートIDを入力"""
-    )
-    st.markdown(
-        f"[テンプレートをコピーする](https://docs.google.com/spreadsheets/d/{TEMPLATE_SPREADSHEET_ID}/copy)"
+    st.markdown('<div class="tabs-top-space"></div>', unsafe_allow_html=True)
+    page = st.radio(
+        "ページ選択",
+        ["初期設定", "入力", "ダッシュボード", "過去データ"],
+        horizontal=True,
+        label_visibility="collapsed",
     )
 
     spreadsheet_id_default = st.session_state.get("spreadsheet_id", "")
-    spreadsheet_id = st.text_input(
-        "スプレッドシートIDを入力",
-        value=spreadsheet_id_default,
-        help="自分のGoogleスプレッドシートIDを入力してください",
-        placeholder="https://docs.google.com/spreadsheets/d/ここがID/edit",
-    ).strip()
-    st.caption("※スプレッドシートのURLの「/d/〜/edit」の間の文字列がIDです")
-    load_button_clicked = st.button("データを読み込む", use_container_width=True)
-    st.session_state["spreadsheet_id"] = spreadsheet_id
+    df = None
 
-    service_account_email = ""
-    if "gcp_service_account" in st.secrets:
-        service_account_email = st.secrets["gcp_service_account"].get("client_email", "")
+    if page == "初期設定":
+        st.info(
+            """【使い方】
+① 以下のリンクからテンプレートをコピー
+② 自分のGoogle Driveに保存
+③ コピーしたスプレッドシートIDを入力"""
+        )
+        st.markdown(
+            f"[テンプレートをコピーする](https://docs.google.com/spreadsheets/d/{TEMPLATE_SPREADSHEET_ID}/copy)"
+        )
 
-    st.info(
-        f"""【重要】スプレッドシートの共有設定が必要です
+        spreadsheet_id = st.text_input(
+            "スプレッドシートIDを入力",
+            value=spreadsheet_id_default,
+            help="自分のGoogleスプレッドシートIDを入力してください",
+            placeholder="https://docs.google.com/spreadsheets/d/ここがID/edit",
+        ).strip()
+        st.caption("※URLの「/d/〜/edit」の間の文字列がIDです")
+        load_button_clicked = st.button("データを読み込む", use_container_width=True)
+        st.session_state["spreadsheet_id"] = spreadsheet_id
+
+        service_account_email = ""
+        if "gcp_service_account" in st.secrets:
+            service_account_email = st.secrets["gcp_service_account"].get("client_email", "")
+
+        st.info(
+            f"""【重要】スプレッドシートの共有設定が必要です
 
 ① Googleスプレッドシートを開く
 ② 右上の「共有」をクリック
@@ -271,11 +281,24 @@ def main():
 
 ④ 権限を「編集者」にする
 
-※これを設定しないと「スプレッドシートが見つかりません」というエラーになります"""
-    )
+※設定しないと「スプレッドシートが見つかりません」と表示されます"""
+        )
 
+        if load_button_clicked:
+            if not spreadsheet_id:
+                st.warning("スプレッドシートIDを入力してください")
+            else:
+                try:
+                    load_sheet_data(spreadsheet_id)
+                    st.success("データを読み込みました。上部メニューから各ページへ進んでください。")
+                except Exception as e:
+                    st.error("スプレッドシートにアクセスできません。共有設定やIDを確認してください。")
+                    st.caption(f"詳細: {e}")
+        return
+
+    spreadsheet_id = st.session_state.get("spreadsheet_id", "").strip()
     if not spreadsheet_id:
-        st.warning("スプレッドシートIDを入力してください")
+        st.warning("初期設定ページでスプレッドシートIDを設定してください")
         return
 
     try:
@@ -286,10 +309,7 @@ def main():
         st.caption(f"詳細: {e}")
         return
 
-    st.markdown('<div class="tabs-top-space"></div>', unsafe_allow_html=True)
-    input_tab, dashboard_tab, history_tab = st.tabs(["入力", "ダッシュボード", "過去データ"])
-
-    with input_tab:
+    if page == "入力":
         st.markdown('<div class="input-form-space"></div>', unsafe_allow_html=True)
         st.subheader("今月のデータ入力")
         if st.session_state.pop("show_register_success", False):
@@ -415,7 +435,7 @@ def main():
 
         st.markdown('<div class="input-form-space"></div>', unsafe_allow_html=True)
 
-    with dashboard_tab:
+    elif page == "ダッシュボード":
         if st.button("データを再読み込み", key="reload_dashboard"):
             st.cache_data.clear()
             st.rerun()
@@ -528,7 +548,7 @@ def main():
         else:
             st.warning("月別グラフに表示できるデータがありません。")
 
-    with history_tab:
+    elif page == "過去データ":
         st.markdown('<div class="section-space"></div>', unsafe_allow_html=True)
         st.subheader("過去データ一覧（全期間）")
 
