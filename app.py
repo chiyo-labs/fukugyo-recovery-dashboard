@@ -13,7 +13,6 @@ st.set_page_config(
     layout="wide",
 )
 
-SPREADSHEET_ID = "1WEGXNH47jHydGSC4QfWa7XXdFCIs5xt4UO1XVonLjHI"
 WORKSHEET_NAME = "Input"
 
 REQUIRED_COLUMNS = [
@@ -48,10 +47,10 @@ def load_credentials():
 
 
 @st.cache_data(ttl=60)
-def load_sheet_data():
+def load_sheet_data(spreadsheet_id):
     credentials = load_credentials()
     client = gspread.authorize(credentials)
-    spreadsheet = client.open_by_key(SPREADSHEET_ID)
+    spreadsheet = client.open_by_key(spreadsheet_id)
     worksheet = spreadsheet.worksheet(WORKSHEET_NAME)
 
     records = worksheet.get_all_records()
@@ -72,18 +71,18 @@ def to_bool(value):
     return str(value).strip().lower() in ["true", "1", "yes", "y", "on", "チェック済み"]
 
 
-def append_input_row(row_values):
+def append_input_row(spreadsheet_id, row_values):
     credentials = load_credentials()
     client = gspread.authorize(credentials)
-    spreadsheet = client.open_by_key(SPREADSHEET_ID)
+    spreadsheet = client.open_by_key(spreadsheet_id)
     worksheet = spreadsheet.worksheet(WORKSHEET_NAME)
     worksheet.append_row(row_values, value_input_option="USER_ENTERED")
 
 
-def append_input_rows(rows_values):
+def append_input_rows(spreadsheet_id, rows_values):
     credentials = load_credentials()
     client = gspread.authorize(credentials)
-    spreadsheet = client.open_by_key(SPREADSHEET_ID)
+    spreadsheet = client.open_by_key(spreadsheet_id)
     worksheet = spreadsheet.worksheet(WORKSHEET_NAME)
     worksheet.append_rows(rows_values, value_input_option="USER_ENTERED")
 
@@ -229,17 +228,31 @@ def main():
     st.markdown(
         """
         <div class="app-description">
-        入力と集計を1つの画面で管理できます。<br>
-        「入力」タブで登録し、「ダッシュボード」タブで回収状況を確認してください。
+        自己投資の回収状況を見える化します。
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+    spreadsheet_id_default = st.session_state.get("spreadsheet_id", "")
+    spreadsheet_id = st.text_input(
+        "スプレッドシートIDを入力",
+        value=spreadsheet_id_default,
+        help="自分のGoogleスプレッドシートIDを入力してください",
+        placeholder="https://docs.google.com/spreadsheets/d/ここがID/edit",
+    ).strip()
+    st.session_state["spreadsheet_id"] = spreadsheet_id
+
+    if not spreadsheet_id:
+        st.warning("スプレッドシートIDを入力してください")
+        return
+
     try:
-        raw_df = load_sheet_data()
+        raw_df = load_sheet_data(spreadsheet_id)
         df = preprocess(raw_df)
     except Exception as e:
-        st.error(f"データ取得に失敗しました：{e}")
+        st.error("スプレッドシートにアクセスできません。共有設定やIDを確認してください。")
+        st.caption(f"詳細: {e}")
         return
 
     st.markdown('<div class="tabs-top-space"></div>', unsafe_allow_html=True)
@@ -361,12 +374,13 @@ def main():
                 if not rows_to_append:
                     st.warning("保存対象の新規行がありません。")
                 else:
-                    append_input_rows(rows_to_append)
+                    append_input_rows(spreadsheet_id, rows_to_append)
                     st.session_state["show_register_success"] = True
                     st.cache_data.clear()
                     st.rerun()
             except Exception as e:
-                st.error(f"登録に失敗しました：{e}")
+                st.error("スプレッドシートにアクセスできません。共有設定やIDを確認してください。")
+                st.caption(f"詳細: {e}")
 
         st.markdown('<div class="input-form-space"></div>', unsafe_allow_html=True)
 
