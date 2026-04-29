@@ -29,11 +29,18 @@ REQUIRED_COLUMNS = [
 
 
 def load_credentials():
+    scopes = ["https://www.googleapis.com/auth/spreadsheets"]
+
+    if "gcp_service_account" in st.secrets:
+        return Credentials.from_service_account_info(
+            st.secrets["gcp_service_account"],
+            scopes=scopes,
+        )
+
     credentials_path = Path("credentials.json")
     if not credentials_path.exists():
         raise FileNotFoundError("credentials.json が見つかりません。")
 
-    scopes = ["https://www.googleapis.com/auth/spreadsheets"]
     return Credentials.from_service_account_file(
         str(credentials_path),
         scopes=scopes,
