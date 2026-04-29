@@ -253,6 +253,8 @@ def main():
         placeholder="https://docs.google.com/spreadsheets/d/ここがID/edit",
     ).strip()
     st.caption("※スプレッドシートのURLの「/d/〜/edit」の間の文字列がIDです")
+    load_button_clicked = st.button("データを読み込む", use_container_width=True)
+    st.session_state["spreadsheet_id"] = spreadsheet_id
 
     service_account_email = ""
     if "gcp_service_account" in st.secrets:
@@ -271,7 +273,6 @@ def main():
 
 ※これを設定しないと「スプレッドシートが見つかりません」というエラーになります"""
     )
-    st.session_state["spreadsheet_id"] = spreadsheet_id
 
     if not spreadsheet_id:
         st.warning("スプレッドシートIDを入力してください")
