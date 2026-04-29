@@ -242,6 +242,24 @@ def main():
         placeholder="https://docs.google.com/spreadsheets/d/ここがID/edit",
     ).strip()
     st.caption("※スプレッドシートのURLの「/d/〜/edit」の間の文字列がIDです")
+
+    service_account_email = ""
+    if "gcp_service_account" in st.secrets:
+        service_account_email = st.secrets["gcp_service_account"].get("client_email", "")
+
+    st.info(
+        f"""【重要】スプレッドシートの共有設定が必要です
+
+① Googleスプレッドシートを開く
+② 右上の「共有」をクリック
+③ 以下のメールアドレスを追加
+
+{service_account_email if service_account_email else "（サービスアカウントメール未設定）"}
+
+④ 権限を「編集者」にする
+
+※これを設定しないと「スプレッドシートが見つかりません」というエラーになります"""
+    )
     st.session_state["spreadsheet_id"] = spreadsheet_id
 
     if not spreadsheet_id:
