@@ -225,7 +225,23 @@ def main():
         unsafe_allow_html=True,
     )
 
-    st.title("副業回収ダッシュボード")
+    if "spreadsheet_id" not in st.session_state:
+        st.session_state["spreadsheet_id"] = ""
+    if "is_initialized" not in st.session_state:
+        st.session_state["is_initialized"] = False
+
+    spreadsheet_id_default = st.session_state.get("spreadsheet_id", "")
+    is_initialized = st.session_state.get("is_initialized", False)
+    show_setup_page = (not spreadsheet_id_default.strip()) or (not is_initialized)
+    df = None
+
+    title_col, action_col = st.columns([4, 1])
+    title_col.title("副業回収ダッシュボード")
+    if not show_setup_page:
+        if action_col.button("⚙️ 設定を変更"):
+            st.session_state["is_initialized"] = False
+            st.rerun()
+
     st.markdown(
         """
         <div class="app-description">
@@ -235,16 +251,6 @@ def main():
         unsafe_allow_html=True,
     )
     st.markdown('<div class="tabs-top-space"></div>', unsafe_allow_html=True)
-    if "spreadsheet_id" not in st.session_state:
-        st.session_state["spreadsheet_id"] = ""
-    if "is_initialized" not in st.session_state:
-        st.session_state["is_initialized"] = False
-
-    spreadsheet_id_default = st.session_state.get("spreadsheet_id", "")
-    is_initialized = st.session_state.get("is_initialized", False)
-
-    show_setup_page = (not spreadsheet_id_default.strip()) or (not is_initialized)
-    df = None
 
     if show_setup_page:
         st.info(
