@@ -239,12 +239,10 @@ def main():
 
 ① 以下のリンクからテンプレートをコピー
 ② 自分のGoogle Driveに保存
-③ スプレッドシートIDを入力"""
+③ コピーしたスプレッドシートIDを入力"""
     )
-    st.link_button(
-        "テンプレートをコピーする",
-        f"https://docs.google.com/spreadsheets/d/{TEMPLATE_SPREADSHEET_ID}/copy",
-        use_container_width=True,
+    st.markdown(
+        f"[テンプレートをコピーする](https://docs.google.com/spreadsheets/d/{TEMPLATE_SPREADSHEET_ID}/copy)"
     )
 
     spreadsheet_id_default = st.session_state.get("spreadsheet_id", "")
