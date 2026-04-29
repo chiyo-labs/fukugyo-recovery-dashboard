@@ -235,17 +235,20 @@ def main():
         unsafe_allow_html=True,
     )
     st.markdown('<div class="tabs-top-space"></div>', unsafe_allow_html=True)
-    page = st.radio(
-        "ページ選択",
-        ["初期設定", "入力", "ダッシュボード", "過去データ"],
-        horizontal=True,
-        label_visibility="collapsed",
-    )
+
+    if "app_page" not in st.session_state:
+        st.session_state["app_page"] = "main"
+    col_setup, col_main = st.columns(2)
+    if col_setup.button("初期設定", use_container_width=True):
+        st.session_state["app_page"] = "setup"
+    if col_main.button("メイン画面", use_container_width=True):
+        st.session_state["app_page"] = "main"
+    current_page = st.session_state["app_page"]
 
     spreadsheet_id_default = st.session_state.get("spreadsheet_id", "")
     df = None
 
-    if page == "初期設定":
+    if current_page == "setup":
         st.info(
             """【使い方】
 ① 以下のリンクからテンプレートをコピー
@@ -298,7 +301,7 @@ def main():
 
     spreadsheet_id = st.session_state.get("spreadsheet_id", "").strip()
     if not spreadsheet_id:
-        st.warning("初期設定ページでスプレッドシートIDを設定してください")
+        st.warning("初期設定でIDを入力してください")
         return
 
     try:
@@ -309,7 +312,9 @@ def main():
         st.caption(f"詳細: {e}")
         return
 
-    if page == "入力":
+    input_tab, dashboard_tab, history_tab = st.tabs(["入力", "ダッシュボード", "過去データ"])
+
+    with input_tab:
         st.markdown('<div class="input-form-space"></div>', unsafe_allow_html=True)
         st.subheader("今月のデータ入力")
         if st.session_state.pop("show_register_success", False):
@@ -435,7 +440,7 @@ def main():
 
         st.markdown('<div class="input-form-space"></div>', unsafe_allow_html=True)
 
-    elif page == "ダッシュボード":
+    with dashboard_tab:
         if st.button("データを再読み込み", key="reload_dashboard"):
             st.cache_data.clear()
             st.rerun()
@@ -548,7 +553,7 @@ def main():
         else:
             st.warning("月別グラフに表示できるデータがありません。")
 
-    elif page == "過去データ":
+    with history_tab:
         st.markdown('<div class="section-space"></div>', unsafe_allow_html=True)
         st.subheader("過去データ一覧（全期間）")
 
